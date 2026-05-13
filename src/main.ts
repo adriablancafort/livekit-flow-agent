@@ -4,97 +4,57 @@ import * as silero from '@livekit/agents-plugin-silero';
 import { audioEnhancement } from '@livekit/plugins-ai-coustics';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
-import { Agent } from './agent';
+import { FlowAgent } from '@/flow-agent';
+import { buildFlowGraph, loadFlowConfig } from '@/flow-loader';
+import type { FlowGraph } from '@/flow-types';
 
-// Load environment variables from a local file.
-// Make sure to set LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET
-// when running locally or self-hosting your agent server.
 dotenv.config({ path: '.env.local' });
+
+const FLOW_CONFIG_PATH = process.env.FLOW_CONFIG ?? 'agent-config.json';
 
 interface ProcessUserData {
   vad: silero.VAD;
+  flowGraph: FlowGraph;
 }
 
 export default defineAgent<ProcessUserData>({
   prewarm: async (proc) => {
     proc.userData.vad = await silero.VAD.load();
+    const config = await loadFlowConfig(FLOW_CONFIG_PATH);
+    proc.userData.flowGraph = buildFlowGraph(config);
   },
   entry: async (ctx) => {
-    // Set up a voice AI pipeline using OpenAI, Cartesia, Deepgram, and the LiveKit turn detector
     const session = new voice.AgentSession({
-      // Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
-      // See all available models at https://docs.livekit.io/agents/models/stt/
       stt: new inference.STT({
         model: 'deepgram/nova-3',
         language: 'multi',
       }),
 
-      // A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
-      // See all providers at https://docs.livekit.io/agents/models/llm/
       llm: new inference.LLM({
         model: 'openai/gpt-5.2-chat-latest',
       }),
 
-      // Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
-      // See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
       tts: new inference.TTS({
         model: 'cartesia/sonic-3',
         voice: '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc',
       }),
 
-      // VAD and turn detection are used to determine when the user is speaking and when the agent should respond
-      // See more at https://docs.livekit.io/agents/build/turns
       turnDetection: new livekit.turnDetector.MultilingualModel(),
       vad: ctx.proc.userData.vad,
-      voiceOptions: {
-        // Allow the LLM to generate a response while waiting for the end of turn
-        preemptiveGeneration: true,
-      },
     });
 
-    // To use a realtime model instead of a voice pipeline, use the following session setup instead.
-    // (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/))
-    // 1. Install '@livekit/agents-plugin-openai'
-    // 2. Set OPENAI_API_KEY in .env.local
-    // 3. Add import `import * as openai from '@livekit/agents-plugin-openai'` to the top of this file
-    // 4. Use the following session setup instead of the version above
-    // const session = new voice.AgentSession({
-    //   llm: new openai.realtime.RealtimeModel({ voice: 'marin' }),
-    // });
-
-    // Start the session, which initializes the voice pipeline and warms up the models
     await session.start({
-      agent: new Agent(),
+      agent: new FlowAgent(ctx.proc.userData.flowGraph),
       room: ctx.room,
       inputOptions: {
-        // ai-coustics QUAIL audio enhancement for noise cancellation
-        // Works for both WebRTC and telephony (SIP) participants
         noiseCancellation: audioEnhancement({ model: 'quailVfL' }),
       },
     });
 
-    // // Add a virtual avatar to the session, if desired
-    // // For other providers, see https://docs.livekit.io/agents/models/avatar/
-    // const avatar = new anam.AvatarSession({
-    //   personaConfig: {
-    //     name: '...',
-    //     avatarId: '...', // See https://docs.livekit.io/agents/models/avatar/plugins/anam
-    //   },
-    // });
-    // // Start the avatar and wait for it to join
-    // await avatar.start(session, ctx.room);
-
-    // Join the room and connect to the user
     await ctx.connect();
-
-    // Greet the user on joining
-    session.generateReply({
-      instructions: 'Greet the user in a helpful and friendly manner.',
-    });
   },
 });
 
-// Run the agent server
 cli.runApp(
   new ServerOptions({
     agent: fileURLToPath(import.meta.url),

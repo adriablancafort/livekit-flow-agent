@@ -1,0 +1,61 @@
+import { llm, voice } from '@livekit/agents';
+import type { FlowGraph, FlowNode } from '@/flow-types';
+import { FLOW_INSTRUCTIONS } from '@/prompts';
+
+function buildNodeInstructions(graph: FlowGraph, node: FlowNode): string {
+  const nodeInstructions = node.instructions?.type === 'prompt' ? node.instructions.text : '';
+
+  return `${graph.globalPrompt ? `${graph.globalPrompt}\n\n` : ''}${FLOW_INSTRUCTIONS}${nodeInstructions ? `\n\n${nodeInstructions}` : ''}`;
+}
+
+export class FlowAgent extends voice.Agent {
+  private readonly graph: FlowGraph;
+
+  constructor(graph: FlowGraph) {
+    super({
+      instructions: buildNodeInstructions(graph, graph.startNode),
+    });
+
+    this.graph = graph;
+    this._tools = this._buildNodeTools(graph.startNode);
+  }
+
+  private _buildNodeTools(node: FlowNode): llm.ToolContext {
+    return Object.fromEntries(
+      node.outgoingEdges.map((edge) => [
+        edge.toolName,
+        llm.tool({
+          description: `Transition to "${edge.targetNode.name}" when: ${edge.condition}`,
+          execute: async () => {
+            await this._transitionTo(edge.targetNode);
+            return `Transitioned to "${edge.targetNode.name}"`;
+          },
+        }),
+      ]),
+    );
+  }
+
+  private async _transitionTo(node: FlowNode) {
+    if (node.type === 'end') {
+      this.session.shutdown();
+      return;
+    }
+
+    this._instructions = buildNodeInstructions(this.graph, node);
+    await this.updateTools(this._buildNodeTools(node));
+
+    if (node.instructions?.type === 'say') {
+      await this.session.say(node.instructions.text);
+    }
+  }
+
+  override async onEnter() {
+    const startNode = this.graph.startNode;
+
+    if (startNode.instructions?.type === 'say') {
+      await this.session.say(startNode.instructions.text);
+    } else if (startNode.instructions?.type === 'prompt') {
+      await this.session.generateReply();
+    }
+  }
+}

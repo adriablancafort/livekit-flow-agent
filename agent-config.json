@@ -1,0 +1,134 @@
+{
+  "name": "Bella Roma Restaurant Scheduler",
+  "globalPrompt": "You are Sofia, a friendly phone assistant for Bella Roma restaurant. Keep replies short and natural for voice. Ask one concise question at a time. Never mention internal workflow mechanics.",
+  "nodes": [
+    {
+      "id": "n_0f3d9c1a",
+      "type": "start",
+      "data": {
+        "name": "Greeting",
+        "instructions": {
+          "type": "prompt",
+          "text": "Greet the caller and ask how you can help. Identify whether they want to book a table, cancel a reservation, ask restaurant information, or end the call."
+        }
+      }
+    },
+    {
+      "id": "n_4a2b7f10",
+      "type": "conversation",
+      "data": {
+        "name": "Collect Reservation Details",
+        "instructions": {
+          "type": "prompt",
+          "text": "Collect reservation details: customer name, day, time, and party size. Confirm all details back in one sentence."
+        }
+      }
+    },
+    {
+      "id": "n_912cd4e7",
+      "type": "conversation",
+      "data": {
+        "name": "Reservation Confirmed",
+        "instructions": {
+          "type": "say",
+          "text": "Perfect, your table is booked. We look forward to seeing you at Bella Roma."
+        }
+      }
+    },
+    {
+      "id": "n_6b11a2cc",
+      "type": "conversation",
+      "data": {
+        "name": "Cancel Reservation",
+        "instructions": {
+          "type": "prompt",
+          "text": "Ask for the reservation name and date, then confirm cancellation politely."
+        }
+      }
+    },
+    {
+      "id": "n_27ff88de",
+      "type": "conversation",
+      "data": {
+        "name": "Restaurant Info",
+        "instructions": {
+          "type": "say",
+          "text": "We are open Monday to Saturday from 11 AM to 10 PM, and Sunday from 12 PM to 9 PM. We are located at 48 Market Street downtown."
+        }
+      }
+    },
+    {
+      "id": "n_d3ea09b4",
+      "type": "end",
+      "data": {
+        "name": "End Call"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_6f91",
+      "source": "n_0f3d9c1a",
+      "target": "n_4a2b7f10",
+      "data": {
+        "condition": "The caller wants to make a new reservation"
+      }
+    },
+    {
+      "id": "e_6f92",
+      "source": "n_4a2b7f10",
+      "target": "n_912cd4e7",
+      "data": {
+        "condition": "Reservation name, day, time, and party size have been collected and confirmed"
+      }
+    },
+    {
+      "id": "e_6f93",
+      "source": "n_0f3d9c1a",
+      "target": "n_6b11a2cc",
+      "data": {
+        "condition": "The caller wants to cancel an existing reservation"
+      }
+    },
+    {
+      "id": "e_6f94",
+      "source": "n_0f3d9c1a",
+      "target": "n_27ff88de",
+      "data": {
+        "condition": "The caller asks for opening hours, location, or general restaurant information"
+      }
+    },
+    {
+      "id": "e_6f95",
+      "source": "n_0f3d9c1a",
+      "target": "n_d3ea09b4",
+      "data": {
+        "condition": "The caller clearly wants to end the conversation"
+      }
+    },
+    {
+      "id": "e_6f96",
+      "source": "n_912cd4e7",
+      "target": "n_d3ea09b4",
+      "data": {
+        "condition": "The reservation confirmation message has been delivered"
+      }
+    },
+    {
+      "id": "e_6f97",
+      "source": "n_6b11a2cc",
+      "target": "n_d3ea09b4",
+      "data": {
+        "condition": "Cancellation is confirmed and no further request remains"
+      }
+    },
+    {
+      "id": "e_6f98",
+      "source": "n_27ff88de",
+      "target": "n_d3ea09b4",
+      "data": {
+        "condition": "Information has been provided and no additional help is requested"
+      }
+    }
+  ]
+}
