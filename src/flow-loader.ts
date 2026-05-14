@@ -11,12 +11,11 @@ export async function loadFlowConfig(configPath: string) {
 }
 
 function buildTransitionToolName(name: string) {
-  const normalized = name
+  return name
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '_')
     .replace(/[^a-z_]/g, '');
-  return `transition_to_${normalized}`;
 }
 
 export function buildFlowGraph(config: FlowConfig) {

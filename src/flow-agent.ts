@@ -3,7 +3,7 @@ import type { FlowGraph, FlowNode } from '@/flow-types';
 import { FLOW_INSTRUCTIONS } from '@/prompts';
 import { endCall } from '@/lib/end-call';
 
-function buildNodeInstructions(graph: FlowGraph, node: FlowNode): string {
+function buildNodeInstructions(graph: FlowGraph, node: FlowNode) {
   let nodeInstructions = '';
 
   if (graph.globalPrompt) {
