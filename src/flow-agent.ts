@@ -1,6 +1,7 @@
 import { llm, voice } from '@livekit/agents';
 import type { FlowGraph, FlowNode } from '@/flow-types';
 import { FLOW_INSTRUCTIONS } from '@/prompts';
+import { endCall } from '@/lib/end-call';
 
 function buildNodeInstructions(graph: FlowGraph, node: FlowNode): string {
   let nodeInstructions = '';
@@ -48,7 +49,7 @@ export class FlowAgent extends voice.Agent {
 
   private async _transitionTo(node: FlowNode) {
     if (node.type === 'end') {
-      this.session.shutdown();
+      await endCall();
       return;
     }
 
