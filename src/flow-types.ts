@@ -8,16 +8,10 @@ export type FlowNodeInstructions = z.infer<typeof flowNodeInstructionsSchema>;
 export type FlowConfig = z.infer<typeof flowConfigSchema>;
 
 // Runtime flow
-export interface FlowStartNode {
-  type: 'start';
-  name: string;
-  instructions: FlowNodeInstructions;
-  outgoingEdges: FlowEdge[];
-}
-
 export interface FlowConversationNode {
   type: 'conversation';
   name: string;
+  isStart?: true;
   instructions: FlowNodeInstructions;
   outgoingEdges: FlowEdge[];
 }
@@ -25,10 +19,9 @@ export interface FlowConversationNode {
 export interface FlowEndNode {
   type: 'end';
   name: string;
-  outgoingEdges: FlowEdge[];
 }
 
-export type FlowNode = FlowStartNode | FlowConversationNode | FlowEndNode;
+export type FlowNode = FlowConversationNode | FlowEndNode;
 
 export interface FlowEdge {
   condition: string;
@@ -38,5 +31,5 @@ export interface FlowEdge {
 
 export interface FlowGraph {
   globalPrompt?: string;
-  startNode: FlowStartNode;
+  startNode: FlowConversationNode;
 }

@@ -4,9 +4,10 @@
   "nodes": [
     {
       "id": "n_0f3d9c1a",
-      "type": "start",
+      "type": "conversation",
       "data": {
         "name": "Greeting",
+        "isStart": true,
         "instructions": {
           "type": "prompt",
           "text": "Greet the caller and ask how you can help. Identify whether they want to book a table, cancel a reservation, ask restaurant information, or end the call."

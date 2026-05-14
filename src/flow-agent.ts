@@ -1,20 +1,19 @@
 import { llm, voice } from '@livekit/agents';
-import type { FlowGraph, FlowNode } from '@/flow-types';
+import type { FlowConversationNode, FlowGraph, FlowNode } from '@/flow-types';
 import { FLOW_INSTRUCTIONS } from '@/prompts';
 import { endCall } from '@/lib/end-call';
 
-function buildNodeInstructions(graph: FlowGraph, node: FlowNode) {
+function buildNodeInstructions(graph: FlowGraph, node: FlowConversationNode) {
   let nodeInstructions = '';
 
   if (graph.globalPrompt) {
     nodeInstructions += graph.globalPrompt + '\n\n';
   }
 
-  nodeInstructions += FLOW_INSTRUCTIONS + '\n\n';
+  nodeInstructions += FLOW_INSTRUCTIONS;
 
-  const hasInstructions = node.type === 'start' || node.type === 'conversation';
-  if (hasInstructions && node.instructions.type === 'prompt') {
-    nodeInstructions += node.instructions.text;
+  if (node.instructions.type === 'prompt') {
+    nodeInstructions += '\n\n' + node.instructions.text;
   }
 
   return nodeInstructions;
@@ -32,7 +31,7 @@ export class FlowAgent extends voice.Agent {
     this._tools = this._buildNodeTools(graph.startNode);
   }
 
-  private _buildNodeTools(node: FlowNode): llm.ToolContext {
+  private _buildNodeTools(node: FlowConversationNode): llm.ToolContext {
     return Object.fromEntries(
       node.outgoingEdges.map((edge) => [
         edge.transitionToolName,
@@ -48,16 +47,16 @@ export class FlowAgent extends voice.Agent {
   }
 
   private async _transitionTo(node: FlowNode) {
-    if (node.type === 'end') {
+    if (node.type === 'conversation') {
+      this._instructions = buildNodeInstructions(this.graph, node);
+      await this.updateTools(this._buildNodeTools(node));
+
+      if (node.instructions.type === 'say') {
+        await this.session.say(node.instructions.text);
+      }
+    } else if (node.type === 'end') {
       await endCall();
       return;
-    }
-
-    this._instructions = buildNodeInstructions(this.graph, node);
-    await this.updateTools(this._buildNodeTools(node));
-
-    if (node.instructions.type === 'say') {
-      await this.session.say(node.instructions.text);
     }
   }
 

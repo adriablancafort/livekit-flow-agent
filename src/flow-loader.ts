@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { flowConfigSchema } from '@/flow-schemas';
-import type { FlowConfig, FlowEdge, FlowGraph, FlowNode } from '@/flow-types';
+import type { FlowConfig, FlowConversationNode, FlowEdge, FlowGraph, FlowNode } from '@/flow-types';
 
 export async function loadFlowConfig(configPath: string) {
   const fullPath = resolve(process.cwd(), configPath);
@@ -20,30 +20,30 @@ function buildTransitionToolName(name: string) {
 
 export function buildFlowGraph(config: FlowConfig) {
   const nodesById = new Map<string, FlowNode>();
+  let startNode: FlowConversationNode | undefined;
 
   for (const node of config.nodes) {
     let flowNode: FlowNode;
 
-    if (node.type === 'start') {
+    if (node.type === 'conversation') {
       flowNode = {
         type: node.type,
         name: node.data.name,
         instructions: node.data.instructions,
         outgoingEdges: [],
       };
-    } else if (node.type === 'conversation') {
+
+      if (node.data.isStart) {
+        flowNode.isStart = true;
+        startNode = flowNode;
+      }
+    } else if (node.type === 'end') {
       flowNode = {
         type: node.type,
         name: node.data.name,
-        instructions: node.data.instructions,
-        outgoingEdges: [],
       };
     } else {
-      flowNode = {
-        type: node.type,
-        name: node.data.name,
-        outgoingEdges: [],
-      };
+      throw new Error("Unsupported node type");
     }
 
     nodesById.set(node.id, flowNode);
@@ -59,11 +59,11 @@ export function buildFlowGraph(config: FlowConfig) {
       transitionToolName,
     };
 
-    nodesById.get(edge.source)!.outgoingEdges.push(flowEdge);
+    const sourceNode = nodesById.get(edge.source)!;
+    if (sourceNode.type === 'conversation') {
+      sourceNode.outgoingEdges.push(flowEdge);
+    }
   }
-
-  const startNodeId = config.nodes.find((node) => node.type === 'start')!.id;
-  const startNode = nodesById.get(startNodeId)!;
 
   return {
     globalPrompt: config.globalPrompt,

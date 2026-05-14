@@ -8,20 +8,11 @@ export const flowNodeInstructionsSchema = z.object({
 export const flowNodeConfigSchema = z.discriminatedUnion('type', [
   z.object({
     id: z.string().trim().min(1),
-    type: z.literal('start'),
-    data: z
-      .object({
-        name: z.string().trim().min(1),
-        instructions: flowNodeInstructionsSchema,
-      })
-      .strict(),
-  }),
-  z.object({
-    id: z.string().trim().min(1),
     type: z.literal('conversation'),
     data: z
       .object({
         name: z.string().trim().min(1),
+        isStart: z.literal(true).optional(),
         instructions: flowNodeInstructionsSchema,
       })
       .strict(),
@@ -68,7 +59,7 @@ export const flowConfigSchema = z
       }
       nodeIds.add(node.id);
 
-      if (node.type === 'start') {
+      if (node.type === 'conversation' && node.data.isStart === true) {
         startNodeCount++;
       }
     });
