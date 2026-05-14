@@ -3,7 +3,8 @@ import type { FlowGraph, FlowNode } from '@/flow-types';
 import { FLOW_INSTRUCTIONS } from '@/prompts';
 
 function buildNodeInstructions(graph: FlowGraph, node: FlowNode): string {
-  const nodeInstructions = node.instructions?.type === 'prompt' ? node.instructions.text : '';
+  const hasInstructions = node.type === 'start' || node.type === 'conversation';
+  const nodeInstructions = hasInstructions && node.instructions.type === 'prompt' ? node.instructions.text : '';
 
   return `${graph.globalPrompt ? `${graph.globalPrompt}\n\n` : ''}${FLOW_INSTRUCTIONS}${nodeInstructions ? `\n\n${nodeInstructions}` : ''}`;
 }
@@ -23,7 +24,7 @@ export class FlowAgent extends voice.Agent {
   private _buildNodeTools(node: FlowNode): llm.ToolContext {
     return Object.fromEntries(
       node.outgoingEdges.map((edge) => [
-        edge.toolName,
+        edge.transitionToolName,
         llm.tool({
           description: `Transition to "${edge.targetNode.name}" when: ${edge.condition}`,
           execute: async () => {
@@ -44,7 +45,7 @@ export class FlowAgent extends voice.Agent {
     this._instructions = buildNodeInstructions(this.graph, node);
     await this.updateTools(this._buildNodeTools(node));
 
-    if (node.instructions?.type === 'say') {
+    if (node.instructions.type === 'say') {
       await this.session.say(node.instructions.text);
     }
   }
@@ -52,9 +53,9 @@ export class FlowAgent extends voice.Agent {
   override async onEnter() {
     const startNode = this.graph.startNode;
 
-    if (startNode.instructions?.type === 'say') {
+    if (startNode.instructions.type === 'say') {
       await this.session.say(startNode.instructions.text);
-    } else if (startNode.instructions?.type === 'prompt') {
+    } else {
       await this.session.generateReply();
     }
   }

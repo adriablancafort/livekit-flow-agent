@@ -7,7 +7,7 @@ export async function loadFlowConfig(configPath: string) {
   const fullPath = resolve(process.cwd(), configPath);
   const raw = await readFile(fullPath, 'utf-8');
   const parsed = JSON.parse(raw);
-  return flowConfigSchema.parse(parsed) as FlowConfig;
+  return flowConfigSchema.parse(parsed);
 }
 
 function buildTransitionToolName(name: string) {
@@ -21,15 +21,30 @@ function buildTransitionToolName(name: string) {
 
 export function buildFlowGraph(config: FlowConfig) {
   const nodesById = new Map<string, FlowNode>();
-  for (const node of config.nodes) {
-    const flowNode: FlowNode = {
-      type: node.type,
-      name: node.data.name,
-      outgoingEdges: [],
-    };
 
-    if (node.data.instructions) {
-      flowNode.instructions = node.data.instructions;
+  for (const node of config.nodes) {
+    let flowNode: FlowNode;
+
+    if (node.type === 'start') {
+      flowNode = {
+        type: node.type,
+        name: node.data.name,
+        instructions: node.data.instructions,
+        outgoingEdges: [],
+      };
+    } else if (node.type === 'conversation') {
+      flowNode = {
+        type: node.type,
+        name: node.data.name,
+        instructions: node.data.instructions,
+        outgoingEdges: [],
+      };
+    } else {
+      flowNode = {
+        type: node.type,
+        name: node.data.name,
+        outgoingEdges: [],
+      };
     }
 
     nodesById.set(node.id, flowNode);
@@ -37,21 +52,22 @@ export function buildFlowGraph(config: FlowConfig) {
 
   for (const edge of config.edges) {
     const targetNode = nodesById.get(edge.target)!;
-    const toolName = buildTransitionToolName(targetNode.name);
+    const transitionToolName = buildTransitionToolName(targetNode.name);
 
-    const graphEdge: FlowEdge = {
+    const flowEdge: FlowEdge = {
       targetNode,
       condition: edge.data.condition,
-      toolName,
+      transitionToolName,
     };
 
-    nodesById.get(edge.source)!.outgoingEdges.push(graphEdge);
+    nodesById.get(edge.source)!.outgoingEdges.push(flowEdge);
   }
 
-  const startNode = config.nodes.find((node) => node.type === 'start')!;
+  const startNodeId = config.nodes.find((node) => node.type === 'start')!.id;
+  const startNode = nodesById.get(startNodeId)!;
 
   return {
     globalPrompt: config.globalPrompt,
-    startNode: nodesById.get(startNode.id)!,
+    startNode,
   } as FlowGraph;
 }

@@ -1,50 +1,42 @@
-export type FlowNodeType = 'start' | 'conversation' | 'end';
+import type { z } from 'zod';
+import type {
+  flowConfigSchema,
+  flowNodeInstructionsSchema,
+} from '@/flow-schemas';
 
-export interface FlowNodeInstructions {
-  type: 'prompt' | 'say';
-  text: string;
-}
+export type FlowNodeInstructions = z.infer<typeof flowNodeInstructionsSchema>;
+export type FlowConfig = z.infer<typeof flowConfigSchema>;
 
-export interface FlowNodeConfig {
-  id: string;
-  type: FlowNodeType;
-  data: {
-    name: string;
-    instructions?: FlowNodeInstructions;
-  };
-}
-
-export interface FlowEdgeConfig {
-  id: string;
-  source: string;
-  target: string;
-  data: {
-    condition: string
-  };
-}
-
-export interface FlowConfig {
+// Runtime flow
+export interface FlowStartNode {
+  type: 'start';
   name: string;
-  globalPrompt?: string;
-  nodes: FlowNodeConfig[];
-  edges: FlowEdgeConfig[];
-}
-
-// Runtime graph shape
-export interface FlowNode {
-  type: FlowNodeType;
-  name: string;
-  instructions?: FlowNodeInstructions;
+  instructions: FlowNodeInstructions;
   outgoingEdges: FlowEdge[];
 }
 
+export interface FlowConversationNode {
+  type: 'conversation';
+  name: string;
+  instructions: FlowNodeInstructions;
+  outgoingEdges: FlowEdge[];
+}
+
+export interface FlowEndNode {
+  type: 'end';
+  name: string;
+  outgoingEdges: FlowEdge[];
+}
+
+export type FlowNode = FlowStartNode | FlowConversationNode | FlowEndNode;
+
 export interface FlowEdge {
   condition: string;
-  toolName: string;
+  transitionToolName: string;
   targetNode: FlowNode;
 }
 
 export interface FlowGraph {
   globalPrompt?: string;
-  startNode: FlowNode;
+  startNode: FlowStartNode;
 }
