@@ -3,10 +3,20 @@ import type { FlowGraph, FlowNode } from '@/flow-types';
 import { FLOW_INSTRUCTIONS } from '@/prompts';
 
 function buildNodeInstructions(graph: FlowGraph, node: FlowNode): string {
-  const hasInstructions = node.type === 'start' || node.type === 'conversation';
-  const nodeInstructions = hasInstructions && node.instructions.type === 'prompt' ? node.instructions.text : '';
+  let nodeInstructions = '';
 
-  return `${graph.globalPrompt ? `${graph.globalPrompt}\n\n` : ''}${FLOW_INSTRUCTIONS}${nodeInstructions ? `\n\n${nodeInstructions}` : ''}`;
+  if (graph.globalPrompt) {
+    nodeInstructions += graph.globalPrompt + '\n\n';
+  }
+
+  nodeInstructions += FLOW_INSTRUCTIONS + '\n\n';
+
+  const hasInstructions = node.type === 'start' || node.type === 'conversation';
+  if (hasInstructions && node.instructions.type === 'prompt') {
+    nodeInstructions += node.instructions.text;
+  }
+
+  return nodeInstructions;
 }
 
 export class FlowAgent extends voice.Agent {
