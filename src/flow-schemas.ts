@@ -13,6 +13,7 @@ export const flowNodeConfigSchema = z.discriminatedUnion('type', [
       .object({
         name: z.string().trim().min(1),
         isStart: z.literal(true).optional(),
+        startSpeaker: z.enum(['agent', 'user']).optional(),
         instructions: flowNodeInstructionsSchema,
       })
       .strict(),

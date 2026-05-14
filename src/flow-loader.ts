@@ -33,6 +33,10 @@ export function buildFlowGraph(config: FlowConfig) {
         outgoingEdges: [],
       };
 
+      if (node.data.startSpeaker) {
+        flowNode.startSpeaker = node.data.startSpeaker;
+      }
+
       if (node.data.isStart) {
         flowNode.isStart = true;
         startNode = flowNode;

@@ -8,6 +8,7 @@
       "data": {
         "name": "Greeting",
         "isStart": true,
+        "startSpeaker": "agent",
         "instructions": {
           "type": "prompt",
           "text": "Greet the caller and ask how you can help. Identify whether they want to book a table, cancel a reservation, ask restaurant information, or end the call."

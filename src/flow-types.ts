@@ -12,6 +12,7 @@ export interface FlowConversationNode {
   type: 'conversation';
   name: string;
   isStart?: true;
+  startSpeaker?: 'agent' | 'user';
   instructions: FlowNodeInstructions;
   outgoingEdges: FlowEdge[];
 }

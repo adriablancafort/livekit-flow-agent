@@ -63,10 +63,12 @@ export class FlowAgent extends voice.Agent {
   override async onEnter() {
     const startNode = this.graph.startNode;
 
-    if (startNode.instructions.type === 'say') {
-      await this.session.say(startNode.instructions.text);
-    } else {
-      await this.session.generateReply();
+    if (startNode.startSpeaker === 'agent') {
+      if (startNode.instructions.type === 'say') {
+        await this.session.say(startNode.instructions.text);
+      } else {
+        await this.session.generateReply();
+      }
     }
   }
 }
