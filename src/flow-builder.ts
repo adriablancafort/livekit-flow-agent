@@ -1,14 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { flowConfigSchema } from '@/flow-schemas';
-import type { FlowConfig, FlowConversationNode, FlowEdge, FlowGraph, FlowNode } from '@/flow-types';
-
-export async function loadFlowConfig(configPath: string) {
-  const fullPath = resolve(process.cwd(), configPath);
-  const raw = await readFile(fullPath, 'utf-8');
-  const parsed = JSON.parse(raw);
-  return flowConfigSchema.parse(parsed);
-}
+import type { AgentConfig, FlowConversationNode, FlowEdge, FlowGraph, FlowNode } from '@/types';
 
 function buildTransitionToolName(name: string) {
   return name
@@ -18,7 +8,7 @@ function buildTransitionToolName(name: string) {
     .replace(/[^a-z_]/g, '');
 }
 
-export function buildFlowGraph(config: FlowConfig) {
+export function buildFlowGraph(config: AgentConfig) {
   const nodesById = new Map<string, FlowNode>();
   let startNode: FlowConversationNode | undefined;
 
@@ -71,7 +61,6 @@ export function buildFlowGraph(config: FlowConfig) {
 
   return {
     globalPrompt: config.globalPrompt,
-    sessionConfig: config.sessionConfig,
     startNode,
   } as FlowGraph;
 }

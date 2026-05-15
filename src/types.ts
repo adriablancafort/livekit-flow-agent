@@ -1,15 +1,13 @@
 import type { z } from 'zod';
 import type {
-  flowConfigSchema,
-  flowNodeInstructionsSchema,
-  sessionConfigSchema,
+  agentConfigSchema,
   turnDetectionConfigSchema,
-} from '@/flow-schemas';
+  flowNodeInstructionsSchema,
+} from '@/schemas';
 
+export type AgentConfig = z.infer<typeof agentConfigSchema>;
 export type TurnDetectionConfig = z.infer<typeof turnDetectionConfigSchema>;
-export type SessionConfig = z.infer<typeof sessionConfigSchema>;
 export type FlowNodeInstructions = z.infer<typeof flowNodeInstructionsSchema>;
-export type FlowConfig = z.infer<typeof flowConfigSchema>;
 
 // Runtime flow
 export interface FlowConversationNode {
@@ -35,7 +33,6 @@ export interface FlowEdge {
 }
 
 export interface FlowGraph {
-  sessionConfig: SessionConfig;
   globalPrompt?: string;
   startNode: FlowConversationNode;
 }

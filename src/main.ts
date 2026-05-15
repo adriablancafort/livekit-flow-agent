@@ -4,9 +4,10 @@ import * as silero from '@livekit/agents-plugin-silero';
 import { audioEnhancement } from '@livekit/plugins-ai-coustics';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
+import { loadAgentConfig } from '@/json-loader';
+import { buildFlowGraph } from '@/flow-builder';
 import { FlowAgent } from '@/flow-agent';
-import { buildFlowGraph, loadFlowConfig } from '@/flow-loader';
-import type { TurnDetectionConfig } from '@/flow-types';
+import type { TurnDetectionConfig } from '@/types';
 
 dotenv.config({ path: '.env.local' });
 
@@ -30,15 +31,15 @@ export default defineAgent<ProcessUserData>({
     proc.userData.vad = await silero.VAD.load();
   },
   entry: async (ctx) => {
-    const config = await loadFlowConfig(FLOW_CONFIG_PATH);
-    const flowGraph = buildFlowGraph(config);
+    const agentConfig = await loadAgentConfig(FLOW_CONFIG_PATH);
+    const flowGraph = buildFlowGraph(agentConfig);
 
     const session = new voice.AgentSession({
-      stt: new inference.STT(flowGraph.sessionConfig.stt),
-      llm: new inference.LLM(flowGraph.sessionConfig.llm),
-      tts: new inference.TTS(flowGraph.sessionConfig.tts),
+      stt: new inference.STT(agentConfig.stt),
+      llm: new inference.LLM(agentConfig.llm),
+      tts: new inference.TTS(agentConfig.tts),
       vad: ctx.proc.userData.vad,
-      turnDetection: createTurnDetection(flowGraph.sessionConfig.turnDetection),
+      turnDetection: createTurnDetection(agentConfig.turnDetection),
     });
 
     await session.start({

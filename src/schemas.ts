@@ -19,13 +19,6 @@ export const turnDetectionConfigSchema = z.object({
   model: z.enum(['multilingual', 'english']),
 }).strict();
 
-export const sessionConfigSchema = z.object({
-  stt: sttConfigSchema,
-  llm: llmConfigSchema,
-  tts: ttsConfigSchema,
-  turnDetection: turnDetectionConfigSchema,
-}).strict();
-
 export const flowNodeInstructionsSchema = z.object({
   type: z.enum(['prompt', 'say']),
   text: z.string().trim().min(1),
@@ -64,11 +57,14 @@ export const flowEdgeConfigSchema = z.object({
   }),
 });
 
-export const flowConfigSchema = z
+export const agentConfigSchema = z
   .object({
     name: z.string().trim().min(1),
+    stt: sttConfigSchema,
+    llm: llmConfigSchema,
+    tts: ttsConfigSchema,
+    turnDetection: turnDetectionConfigSchema,
     globalPrompt: z.string().trim().min(1).optional(),
-    sessionConfig: sessionConfigSchema,
     nodes: z.array(flowNodeConfigSchema).min(1),
     edges: z.array(flowEdgeConfigSchema),
   })

@@ -1,5 +1,5 @@
 import { llm, voice } from '@livekit/agents';
-import type { FlowConversationNode, FlowGraph, FlowNode } from '@/flow-types';
+import type { FlowConversationNode, FlowGraph, FlowNode } from '@/types';
 import { FLOW_INSTRUCTIONS } from '@/prompts';
 import { endCall } from '@/lib/end-call';
 
