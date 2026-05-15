@@ -53,7 +53,7 @@ export const flowConfigSchema = z
       // Node IDs must be unique
       if (nodeIds.has(node.id)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           path: ['nodes', index],
           message: `Duplicate node id "${node.id}".`,
         });
@@ -68,7 +68,7 @@ export const flowConfigSchema = z
     // Exactly one start node
     if (startNodeCount !== 1) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['nodes'],
         message: `Flow must have exactly one start node, found ${startNodeCount}.`,
       });
@@ -81,7 +81,7 @@ export const flowConfigSchema = z
       // Edge IDs must be unique
       if (edgeIds.has(edge.id)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           path: ['edges', index],
           message: `Duplicate edge id "${edge.id}".`,
         });
@@ -91,7 +91,7 @@ export const flowConfigSchema = z
       // Edge sources must reference existing nodes
       if (!nodeIds.has(edge.source)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           path: ['edges', index, 'source'],
           message: `Edge "${edge.id}": source node "${edge.source}" does not exist.`,
         });
@@ -100,7 +100,7 @@ export const flowConfigSchema = z
       // Edge targets must reference existing nodes
       if (!nodeIds.has(edge.target)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           path: ['edges', index, 'target'],
           message: `Edge "${edge.id}": target node "${edge.target}" does not exist.`,
         });
@@ -110,7 +110,7 @@ export const flowConfigSchema = z
       const key = `${edge.source}-${edge.target}`;
       if (sourceTargetKeys.has(key)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           path: ['edges', index],
           message: `Duplicate edge from "${edge.source}" to "${edge.target}".`,
         });
