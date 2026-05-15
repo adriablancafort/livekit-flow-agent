@@ -71,6 +71,7 @@ export function buildFlowGraph(config: FlowConfig) {
 
   return {
     globalPrompt: config.globalPrompt,
+    sessionConfig: config.sessionConfig,
     startNode,
   } as FlowGraph;
 }

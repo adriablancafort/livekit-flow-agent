@@ -1,5 +1,31 @@
 import { z } from 'zod';
 
+export const sttConfigSchema = z.object({
+  model: z.string().trim().min(1),
+  language: z.string().trim().min(1).exactOptional(),
+}).strict();
+
+export const llmConfigSchema = z.object({
+  model: z.string().trim().min(1),
+}).strict();
+
+export const ttsConfigSchema = z.object({
+  model: z.string().trim().min(1),
+  voice: z.string().trim().min(1).exactOptional(),
+  language: z.string().trim().min(1).exactOptional(),
+}).strict();
+
+export const turnDetectionConfigSchema = z.object({
+  model: z.enum(['multilingual', 'english']),
+}).strict();
+
+export const sessionConfigSchema = z.object({
+  stt: sttConfigSchema,
+  llm: llmConfigSchema,
+  tts: ttsConfigSchema,
+  turnDetection: turnDetectionConfigSchema,
+}).strict();
+
 export const flowNodeInstructionsSchema = z.object({
   type: z.enum(['prompt', 'say']),
   text: z.string().trim().min(1),
@@ -42,6 +68,7 @@ export const flowConfigSchema = z
   .object({
     name: z.string().trim().min(1),
     globalPrompt: z.string().trim().min(1).optional(),
+    sessionConfig: sessionConfigSchema,
     nodes: z.array(flowNodeConfigSchema).min(1),
     edges: z.array(flowEdgeConfigSchema),
   })

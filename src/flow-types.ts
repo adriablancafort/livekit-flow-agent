@@ -2,8 +2,12 @@ import type { z } from 'zod';
 import type {
   flowConfigSchema,
   flowNodeInstructionsSchema,
+  sessionConfigSchema,
+  turnDetectionConfigSchema,
 } from '@/flow-schemas';
 
+export type TurnDetectionConfig = z.infer<typeof turnDetectionConfigSchema>;
+export type SessionConfig = z.infer<typeof sessionConfigSchema>;
 export type FlowNodeInstructions = z.infer<typeof flowNodeInstructionsSchema>;
 export type FlowConfig = z.infer<typeof flowConfigSchema>;
 
@@ -31,6 +35,7 @@ export interface FlowEdge {
 }
 
 export interface FlowGraph {
+  sessionConfig: SessionConfig;
   globalPrompt?: string;
   startNode: FlowConversationNode;
 }

@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { FlowAgent } from '@/flow-agent';
 import { buildFlowGraph, loadFlowConfig } from '@/flow-loader';
-import type { FlowGraph } from '@/flow-types';
+import type { TurnDetectionConfig } from '@/flow-types';
 
 dotenv.config({ path: '.env.local' });
 
@@ -14,37 +14,35 @@ const FLOW_CONFIG_PATH = process.env.FLOW_CONFIG ?? 'agent-config.json';
 
 interface ProcessUserData {
   vad: silero.VAD;
-  flowGraph: FlowGraph;
+}
+
+function createTurnDetection(config: TurnDetectionConfig) {
+  switch (config.model) {
+    case 'multilingual':
+      return new livekit.turnDetector.MultilingualModel();
+    case 'english':
+      return new livekit.turnDetector.EnglishModel();
+  }
 }
 
 export default defineAgent<ProcessUserData>({
   prewarm: async (proc) => {
     proc.userData.vad = await silero.VAD.load();
-    const config = await loadFlowConfig(FLOW_CONFIG_PATH);
-    proc.userData.flowGraph = buildFlowGraph(config);
   },
   entry: async (ctx) => {
+    const config = await loadFlowConfig(FLOW_CONFIG_PATH);
+    const flowGraph = buildFlowGraph(config);
+
     const session = new voice.AgentSession({
-      stt: new inference.STT({
-        model: 'deepgram/nova-3',
-        language: 'multi',
-      }),
-
-      llm: new inference.LLM({
-        model: 'openai/gpt-5.2-chat-latest',
-      }),
-
-      tts: new inference.TTS({
-        model: 'cartesia/sonic-3',
-        voice: '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc',
-      }),
-
-      turnDetection: new livekit.turnDetector.MultilingualModel(),
+      stt: new inference.STT(flowGraph.sessionConfig.stt),
+      llm: new inference.LLM(flowGraph.sessionConfig.llm),
+      tts: new inference.TTS(flowGraph.sessionConfig.tts),
       vad: ctx.proc.userData.vad,
+      turnDetection: createTurnDetection(flowGraph.sessionConfig.turnDetection),
     });
 
     await session.start({
-      agent: new FlowAgent(ctx.proc.userData.flowGraph),
+      agent: new FlowAgent(flowGraph),
       room: ctx.room,
       inputOptions: {
         noiseCancellation: audioEnhancement({ model: 'quailVfL' }),
